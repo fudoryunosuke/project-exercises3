@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>道路管理システム - 損傷検索</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<!-- カスタム CSS -->
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body class="flex h-screen">
+
+<!-- ===================== サイドバー ===================== -->
+<aside id="sidebar" class="w-64 bg-gray-900 border-r border-gray-800 flex flex-col p-4">
+  <div id="toggleSidebar" class="cursor-pointer mb-4 p-2 bg-gray-700 text-white text-center rounded">☰</div>
+  <h1 class="text-xl font-bold text-yellow-400 mb-4 sidebar-text">道路管理システム</h1>
+
+  <nav class="mb-4 border-b border-gray-700 pb-4">
+    <a href="dashboard.html" class="block px-4 py-2 rounded hover:bg-gray-800 text-gray-400 mb-2 sidebar-link">
+      <span class="sidebar-text">ダッシュボード</span>
+    </a>
+    <a href="index.html" class="block px-4 py-2 rounded hover:bg-gray-800 text-gray-400 mb-2 sidebar-link">
+      <span class="sidebar-text">マップ表示</span>
+    </a>
+    <a href="search.html" class="block px-4 py-2 rounded bg-gray-800 text-white sidebar-link">
+      <span class="sidebar-text">損傷検索</span>
+    </a>
+  </nav>
+
+  <div class="mb-4 border-b border-gray-700 pb-4">
+    <h2 class="text-gray-400 font-semibold mb-2 sidebar-text">フィルター</h2>
+
+    <label class="block text-sm font-semibold text-gray-400 mb-1 sidebar-text">月</label>
+    <select id="month-filter" class="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-white mb-3">
+      <option>全て</option>
+    </select>
+
+    <label class="block text-sm font-semibold text-gray-400 mb-1 sidebar-text">損傷度</label>
+    <select id="severity-filter" class="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-white mb-3">
+      <option>全て</option>
+    </select>
+
+    <label class="block text-sm font-semibold text-gray-400 mb-1 sidebar-text">損傷の種類</label>
+    <select id="type-filter" class="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-white mb-3">
+      <option>全て</option>
+    </select>
+
+    <label class="block text-sm font-semibold text-gray-400 mb-1 sidebar-text">対応状況</label>
+    <select id="status-filter" class="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-white">
+      <option>全て</option>
+      <option value="pending">未対応</option>
+      <option value="in-progress">対応中</option>
+      <option value="completed">対応完了</option>
+      <option value="cancelled">対応不要</option>
+    </select>
+  </div>
+
+  <!-- リセットボタン -->
+  <button id="reset-filters" class="w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded mt-2 sidebar-text">リセット</button>
+
+  <!-- 凡例 -->
+  <div class="mt-4 sidebar-text">
+    <h3 class="text-sm font-semibold text-gray-400 mb-2">凡例</h3>
+    <div class="legend-item"><span class="legend-dot legend-high"></span> 高度</div>
+    <div class="legend-item"><span class="legend-dot legend-medium"></span> 中度</div>
+    <div class="legend-item"><span class="legend-dot legend-low"></span> 低度</div>
+  </div>
+
+  
+</aside>
+
+<!-- ===================== メインコンテンツ ===================== -->
+<main class="flex-1 p-6 overflow-y-auto flex flex-col">
+  <div class="flex flex-1 gap-4 p-4">
+  <!-- 左カラム：マップ + 検索結果 + ボタン -->
+  <div class="flex-1 flex flex-col gap-4">
+    <div id="map" class="h-[480px] rounded-lg border border-gray-700 flex-shrink-0"></div>
+
+    <!-- 検索結果（サイドバーから移動） -->
+    <div class="bg-gray-900 border border-gray-700 rounded-lg p-4">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-sm font-semibold text-gray-200">検索結果 <span id="result-count" class="text-gray-400"></span></h2>
+      </div>
+      <div id="result-list" class="space-y-2 max-h-[280px] overflow-y-auto"></div>
+    </div>
+
+    <!-- アクションボタン群 -->
+    <div style="display:flex; gap:0.5rem;">
+      <button id="toReportBtn" class="bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-2 px-4 rounded hidden">報告書作成</button>
+      <button id="toMapBtn" class="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded hidden">マップで表示</button>
+    </div>
+  </div>
+
+  <!-- 損傷詳細カード -->
+<div id="damage-card" class="hidden p-6 flex-1 flex flex-col gap-4 overflow-y-auto max-h-[800px]">
+  <img id="damage-image" src="" alt="損傷画像" class="mb-4">
+
+  <div id="damage-info" class="grid grid-cols-2 gap-4">
+    <div class="detail-row"><span class="detail-label">種類:</span> <span class="detail-value" id="type"></span></div>
+    <div class="detail-row"><span class="detail-label">損傷度:</span> <span class="detail-value" id="severity"></span></div>
+    <div class="detail-row"><span class="detail-label">日付:</span> <span class="detail-value" id="date"></span></div>
+    <div class="detail-row"><span class="detail-label">GPS:</span> <span class="detail-value" id="gps"></span></div>
+    <div class="detail-row"><span class="detail-label">確信度:</span> <span class="detail-value" id="size"></span></div>
+    <!-- 追加情報 -->
+    <div class="detail-row"><span class="detail-label">パトロール班:</span> <span class="detail-value" id="patrolTeam"></span></div>
+    <div class="detail-row"><span class="detail-label">車両:</span> <span class="detail-value" id="vehicle"></span></div>
+    <div class="detail-row"><span class="detail-label">天候:</span> <span class="detail-value" id="weather"></span></div>
+  </div>
+
+  <div class="card-section mt-4">
+    <h3 class="font-bold text-yellow-400 mb-2">文字起こしメモ</h3>
+    <p id="voice-text" class="bg-gray-800 border border-gray-700 rounded-lg p-3 text-lg whitespace-pre-wrap"></p>
+  </div>
+
+  <div class="card-section mt-4">
+    <h3 class="font-bold text-yellow-400 mb-2">ボイスメモ</h3>
+    <audio id="voice" controls class="w-full"></audio>
+  </div>
+</div>
+
+
+  <p id="no-selection" class="text-gray-400 text-center mt-4">検索結果から損傷を選択してください。</p>
+</main>
+
+<!-- JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="assets/js/damages.js"></script>
+<script src="assets/js/search.js"></script>
+</body>
+</html>
