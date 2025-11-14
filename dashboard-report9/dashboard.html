@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>道路管理システム - ダッシュボード</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link id="app-style" rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="flex h-screen">
+
+<!-- サイドバー -->
+<aside id="sidebar" class="w-64 bg-gray-900 border-r border-gray-800 flex flex-col p-4">
+  <div id="toggleSidebar" class="cursor-pointer mb-4 p-2 bg-gray-700 text-white text-center rounded">☰</div>
+  <h1 class="text-xl font-bold text-yellow-400 mb-4 sidebar-text">道路管理システム</h1>
+  <nav class="mb-4 border-b border-gray-700 pb-4">
+    <a href="dashboard.html" class="block px-4 py-2 rounded bg-gray-800 text-white mb-2 sidebar-link">
+      <span class="sidebar-text">ダッシュボード</span>
+    </a>
+    <a href="index.html" class="block px-4 py-2 rounded hover:bg-gray-800 text-gray-400 mb-2 sidebar-link">
+      <span class="sidebar-text">マップ表示</span>
+    </a>
+    <a href="search.html" class="block px-4 py-2 rounded hover:bg-gray-800 text-gray-400 sidebar-link">
+      <span class="sidebar-text">損傷検索</span>
+    </a>
+  </nav>
+</aside>
+
+<!-- メイン -->
+<main class="flex-1 p-6 overflow-y-auto">
+  <div class="space-y-8" id="dashboard-root">
+    <!-- JSで描画 -->
+  </div>
+</main>
+
+<script>
+(function(){
+  const v = String(Date.now());
+  function load(src, onload){ 
+    const s = document.createElement('script'); 
+    s.src = src + '?v=' + v; 
+    s.onload = onload;
+    document.body.appendChild(s); 
+  }
+
+  // 変更: damages.js -> utils.js -> dashboard.js の順でロード
+  load('assets/js/damages.js', () => {
+    load('assets/js/utils.js', () => {
+        load('assets/js/dashboard.js');
+    });
+  });
+})();
+</script>
+</body>
+</html>
+
